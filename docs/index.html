@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ShackDash</title>
+<meta name="description" content="ShackDash: a free Windows dashboard for radio amateurs. Space weather, propagation, DX spots, satellites, contests, weather, POTA/WWFF and APRS in one window.">
+<link rel="icon" href="favicon.png">
+<style>
+  :root {
+    --bg: #14181d; --panel: #1a1f26; --screen: #080d10; --edge: #3a414c;
+    --text: #eef3f8; --dim: #a7b3c0; --faint: #56606b;
+    --green: #57e39a; --blue: #6cb6ff; --amber: #ffbf5f; --red: #ff7a6b;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+         font: 16px/1.6 "Segoe UI", system-ui, -apple-system, sans-serif; }
+  a { color: var(--blue); }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 16px; }
+
+  header.top { position: sticky; top: 0; z-index: 10; background: rgba(20,24,29,.92);
+               backdrop-filter: blur(6px); border-bottom: 1px solid var(--edge); }
+  header.top .wrap { display: flex; align-items: center; gap: 24px; height: 56px; }
+  .brand { font-weight: 700; letter-spacing: .14em; text-decoration: none; color: var(--text); white-space: nowrap; }
+  .brand span { color: var(--green); }
+  nav { display: flex; gap: 18px; overflow-x: auto; scrollbar-width: none; }
+  nav::-webkit-scrollbar { display: none; }
+  nav a { color: var(--dim); text-decoration: none; font-size: 14px; white-space: nowrap; }
+  nav a:hover { color: var(--text); }
+
+  .hero { padding: 56px 0 32px; text-align: center; }
+  .hero h1 { font-size: clamp(32px, 6vw, 52px); letter-spacing: .12em; margin: 0 0 8px; }
+  .hero h1 span { color: var(--green); }
+  .hero p.lead { color: var(--dim); font-size: clamp(17px, 2.2vw, 20px); max-width: 720px; margin: 0 auto 28px; }
+  .btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  .btn { display: inline-block; padding: 12px 22px; border-radius: 8px; text-decoration: none; font-weight: 600;
+         color: var(--text); background: linear-gradient(#4a525e, #343a44); border: 1px solid #12161b;
+         box-shadow: inset 0 1px 0 rgba(255,255,255,.12), 0 2px 6px rgba(0,0,0,.4); }
+  .btn.primary { background: linear-gradient(#3b86cc, #2f6fb0); border-color: #6cb6ff; }
+  .btn:hover { filter: brightness(1.12); }
+  .meta { color: var(--faint); font-size: 14px; margin-top: 14px; }
+
+  .shot { border: 1px solid var(--edge); border-radius: 10px; background: var(--screen); overflow: hidden;
+          box-shadow: 0 10px 40px rgba(0,0,0,.5); }
+  .shot img { display: block; width: 100%; height: auto; }
+
+  section { padding: 48px 0; border-top: 1px solid #22282f; }
+  h2 { font-size: 26px; letter-spacing: .06em; margin: 0 0 6px; }
+  h2::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 50%;
+               background: var(--green); box-shadow: 0 0 8px var(--green); margin-right: 12px; vertical-align: middle; }
+  .sub { color: var(--dim); margin: 0 0 24px; }
+
+  .tabkeys { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+  .tabkeys button { font: inherit; font-size: 13px; letter-spacing: .06em; color: var(--text); cursor: pointer;
+                    padding: 7px 12px; border-radius: 6px; border: 1px solid #12161b;
+                    background: linear-gradient(#4a525e, #343a44); }
+  .tabkeys button[aria-selected="true"] { background: linear-gradient(#3b86cc, #2f6fb0); border-color: var(--blue); }
+  .caption { color: var(--dim); margin: 12px 2px 0; min-height: 3.2em; }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+  .card { background: var(--panel); border: 1px solid var(--edge); border-radius: 10px; padding: 18px 20px; }
+  .card h3 { margin: 0 0 6px; font-size: 17px; color: var(--blue); }
+  .card p { margin: 0; color: var(--dim); font-size: 15px; }
+  ol.steps { padding-left: 22px; } ol.steps li { margin-bottom: 10px; }
+  code { background: var(--screen); border: 1px solid #262d35; border-radius: 4px; padding: 1px 6px; font-size: 14px; }
+
+  .legal { background: var(--panel); border: 1px solid var(--edge); border-left: 4px solid var(--amber);
+           border-radius: 10px; padding: 22px 26px; }
+  .legal h3 { margin: 18px 0 4px; font-size: 16px; color: var(--amber); }
+  .legal h3:first-child { margin-top: 0; }
+  .legal p { margin: 0; color: var(--dim); font-size: 15px; }
+  .warn { color: var(--text); font-weight: 600; }
+
+  footer { border-top: 1px solid #22282f; padding: 28px 0 40px; color: var(--faint); font-size: 13px; }
+  footer p { margin: 4px 0; }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="#">SHACK<span>DASH</span></a>
+    <nav>
+      <a href="#tour">Tour</a>
+      <a href="#features">Features</a>
+      <a href="#start">Get started</a>
+      <a href="#privacy">Privacy</a>
+      <a href="#disclaimer">Disclaimer</a>
+      <a href="https://github.com/lrizio/ShackDash">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+<div class="wrap">
+  <div class="hero">
+    <h1>SHACK<span>DASH</span></h1>
+    <p class="lead">A free Windows dashboard that puts the internet data a radio amateur wants into one window:
+      space weather, propagation, DX spots, satellites, contests, weather, portable activators, APRS and more.</p>
+    <div class="btns">
+      <a class="btn primary" href="https://github.com/lrizio/ShackDash/releases/latest">Download for Windows</a>
+      <a class="btn" href="https://github.com/lrizio/ShackDash">View source</a>
+    </div>
+    <p class="meta">Version 1.3 · Windows 10/11 64-bit · No installer, no account, no API keys · MIT licence</p>
+  </div>
+  <div class="shot"><img src="guide/tab_a.png" alt="ShackDash space weather tab" width="1560" height="960"></div>
+</div>
+
+<section id="tour">
+  <div class="wrap">
+    <h2>Fifteen tabs</h2>
+    <p class="sub">Pick a tab to see it. These are real screenshots with live data.</p>
+    <div class="tabkeys" role="tablist" id="tabkeys"></div>
+    <div class="shot"><img id="tabimg" src="guide/tab_a.png" alt="" width="1560" height="960"></div>
+    <p class="caption" id="tabcap"></p>
+  </div>
+</section>
+
+<section id="features">
+  <div class="wrap">
+    <h2>What it does</h2>
+    <p class="sub">Every source is free. Everything is worked out from your own callsign and grid locator.</p>
+    <div class="grid">
+      <div class="card"><h3>Propagation at a glance</h3><p>SFI, Kp, X-ray, solar wind and Bz, N0NBH band conditions, nearest ionosonde MUF, aurora and D-RAP absorption.</p></div>
+      <div class="card"><h3>Who hears me</h3><p>RBN, PSKReporter and WSPR reports of your own signal on a map, alongside a filtered DX cluster.</p></div>
+      <div class="card"><h3>Satellites</h3><p>Passes for about 95 amateur satellites, a live tracker with Doppler-corrected frequencies and a sky plot.</p></div>
+      <div class="card"><h3>Portable and contests</h3><p>POTA, WWFF and ParksnPeaks activators merged, contests this week and announced DXpeditions.</p></div>
+      <div class="card"><h3>Antenna weather</h3><p>Local conditions, a wind alert threshold, thunderstorm risk and (in Australia) BoM radar and warnings.</p></div>
+      <div class="card"><h3>Your own shack</h3><p>An optional tab that watches your Pi-Star/WPSD hotspots and other gear on your home network.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="start">
+  <div class="wrap">
+    <h2>Get started</h2>
+    <ol class="steps">
+      <li>Download <code>ShackDash-1.3-windows.zip</code> from the <a href="https://github.com/lrizio/ShackDash/releases/latest">latest release</a> and unzip it anywhere.</li>
+      <li>Run <code>ShackDash.exe</code>. The program is not code-signed, so Windows may say <em>"Windows protected your PC"</em>. Click <em>More info</em>, then <em>Run anyway</em>.</li>
+      <li>SETUP opens by itself on the first start. Enter <b>your</b> callsign and 6-character grid locator. Distances, beam headings, weather and passes all come from it.</li>
+      <li>Read the <b>ShackDash User Guide.pdf</b> in the zip for a walk through every tab.</li>
+    </ol>
+    <p class="sub">Prefer Python? Run it from source: <code>pip install -r requirements.txt</code> then <code>python main.py</code>.</p>
+  </div>
+</section>
+
+<section id="privacy">
+  <div class="wrap">
+    <h2>Privacy</h2>
+    <p class="sub">ShackDash has no server, no telemetry and no analytics. The author receives nothing from your copy.</p>
+    <div class="grid">
+      <div class="card"><h3>Direct connections only</h3><p>Your PC fetches data straight from each provider. Some requests include your callsign (receive-only logins to DX clusters, RBN and APRS-IS; PSKReporter lookups) or your locator (weather, passes).</p></div>
+      <div class="card"><h3>Stays on your PC</h3><p>Settings and the data cache live in <code>%APPDATA%\ShackDash</code>. The My Shack tab only talks to devices you add on your own network.</p></div>
+      <div class="card"><h3>Never transmits</h3><p>ShackDash does not key any radio. APRS is receive-only.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="disclaimer">
+  <div class="wrap">
+    <h2>Disclaimer</h2>
+    <p class="sub">Please read this before using ShackDash. The full text is in
+      <a href="https://github.com/lrizio/ShackDash/blob/main/DISCLAIMER.md">DISCLAIMER.md</a>.</p>
+    <div class="legal">
+      <h3>No warranty</h3>
+      <p>ShackDash is a free hobby project provided <b>"as is"</b>, without warranty of any kind, express or implied,
+        under the <a href="https://github.com/lrizio/ShackDash/blob/main/LICENSE">MIT License</a>. You use it entirely at your own risk.</p>
+      <h3>Limitation of liability</h3>
+      <p>To the maximum extent permitted by law, the author is not liable for any loss or damage of any kind
+        arising from the use of, or inability to use, ShackDash or its hotspot add-on, including damage to equipment,
+        data loss, injury or licence infringements.</p>
+      <h3>Not for safety-of-life use</h3>
+      <p><span class="warn">Never rely on ShackDash to decide whether it is safe to climb a tower, work on an antenna, operate
+        portable or travel.</span> Weather, warnings, radar, space-weather and propagation data may be late, cached or wrong.
+        Always check your official weather and emergency services.</p>
+      <h3>Not legal advice</h3>
+      <p>Band plans, licence privileges and frequency checks are a convenience and may be out of date. You are solely
+        responsible for operating within your own licence conditions and your country's regulations.</p>
+      <h3>Third-party data</h3>
+      <p>Data comes from independent providers such as NOAA, NASA, the Bureau of Meteorology, Open-Meteo, CelesTrak,
+        PSKReporter, RBN, POTA, WWFF and others. ShackDash is not affiliated with or endorsed by any of them. Their
+        data, names and trademarks belong to their owners and are subject to their own terms, and any source may
+        change or stop without notice.</p>
+      <h3>Hotspot add-on</h3>
+      <p>The optional installer changes files on your Pi-Star/WPSD hotspot. Back it up first and only use it on devices you own or administer.</p>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <p>ShackDash © 2026 VK3EI · Released under the <a href="https://github.com/lrizio/ShackDash/blob/main/LICENSE">MIT License</a> · Provided as is, without warranty.</p>
+    <p>All data © its respective providers. All trademarks are the property of their owners. ShackDash is not affiliated with any data provider.</p>
+    <p>Questions or bugs: <a href="https://github.com/lrizio/ShackDash/issues">GitHub Issues</a>. 73!</p>
+  </div>
+</footer>
+
+<script>
+  const TABS = [
+    ["a", "A · SPACE WX", "Solar flux, sunspots, A and Kp, X-ray class, solar wind and Bz, NOAA scales, N0NBH band conditions, ionosondes, alerts and the aurora oval."],
+    ["b", "B · LIVE", "DX cluster with band filter and skimmer toggle, who hears me on RBN, PSKReporter and WSPR, band × continent activity and NCDXF beacons."],
+    ["c", "C · LOCAL", "UTC and local clocks, sun and moon times and positions, grey-line map and short/long-path beam headings to any call, prefix or grid."],
+    ["d", "D · SATS", "24-hour pass list for about 95 amateur satellites, a live tracker with Doppler-corrected frequencies, sky plot and ground tracks."],
+    ["e", "E · DX & CONTESTS", "Contests on now and over the next 8 days, announced DX operations and the Club Log most-wanted list."],
+    ["f", "F · DIGITAL", "XLX, D-STAR, YSF, NXDN and P25 reflectors and the BrandMeister talkgroup directory."],
+    ["g", "G · VHF/UHF", "Hepburn tropospheric ducting forecast, VHF+ cluster spots with a path map, and the VHF outlook."],
+    ["h", "H · WEATHER", "Current conditions, antenna wind alert, thunderstorm risk, 48-hour plots, 3-day outlook, and BoM radar and warnings for Australia."],
+    ["i", "I · NEWS", "WIA, ARRL, Amateur Radio Newsline and DX-World headlines with the story text."],
+    ["j", "J · SUN", "NOAA 27-day outlook, the solar cycle observed and predicted, D-RAP absorption and SDO/LASCO images."],
+    ["k", "K · PORTABLE", "POTA, WWFF and ParksnPeaks activators merged with filters, map, beam heading and privilege check."],
+    ["l", "L · APRS", "APRS-IS stations, objects and weather around your QTH (receive-only), with tracks and a packet log."],
+    ["m", "M · PLANNER", "Meteor showers, a 4-week EME planner, and ARISS school contacts and SSTV events."],
+    ["n", "N · TOOLS", "Callsign lookup, KiwiSDR receivers near you or the DX, and the Australian licence privileges and frequency checker."],
+    ["o", "O · MY SHACK", "Optional: your own Pi-Star/WPSD hotspots and other network gear, with last-heard stations. Hide it in SETUP."],
+  ];
+  const keys = document.getElementById("tabkeys"), img = document.getElementById("tabimg"),
+        cap = document.getElementById("tabcap");
+  function show(i) {
+    const [id, name, text] = TABS[i];
+    img.src = "guide/tab_" + id + ".png"; img.alt = "ShackDash tab " + name;
+    cap.textContent = text;
+    [...keys.children].forEach((b, j) => b.setAttribute("aria-selected", j === i));
+  }
+  TABS.forEach(([id, name], i) => {
+    const b = document.createElement("button");
+    b.type = "button"; b.role = "tab"; b.textContent = name; b.onclick = () => show(i);
+    keys.appendChild(b);
+  });
+  show(0);
+</script>
+</body>
+</html>
