@@ -110,6 +110,11 @@ class DashWindow(QWidget):
         QShortcut(QKeySequence("Ctrl+R"), self, activated=self.hub.refresh_all)
         for i in range(10):
             QShortcut(QKeySequence(str((i + 1) % 10)), self, activated=lambda i=i: self.show_tab(i))
+        for i in range(len(TABS)):                          # tab letters A.. : Alt+letter, and Ctrl+letter too
+            letter = chr(ord("A") + i)                      # (Ctrl+A / Ctrl+C stay select-all / copy)
+            QShortcut(QKeySequence(f"Alt+{letter}"), self, activated=lambda i=i: self.show_tab(i))
+            if letter not in "AC":
+                QShortcut(QKeySequence(f"Ctrl+{letter}"), self, activated=lambda i=i: self.show_tab(i))
         QShortcut(QKeySequence("Ctrl+Tab"), self, activated=lambda: self.show_tab((self.cur + 1) % len(self.tabs)))
         QShortcut(QKeySequence("Ctrl+Shift+Tab"), self,
                   activated=lambda: self.show_tab((self.cur - 1) % len(self.tabs)))

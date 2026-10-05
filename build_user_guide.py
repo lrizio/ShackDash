@@ -229,6 +229,8 @@ def build():
     f.append(table([
         ["Key", "Action"],
         ["1 ... 9, 0", "Jump to tab A ... I, and J"],
+        ["Alt+A ... Alt+O", "Jump straight to the tab with that letter (Alt+O = My Shack)"],
+        ["Ctrl+B, Ctrl+D ... Ctrl+O", "The same with Ctrl (Ctrl+A and Ctrl+C stay select-all and copy)"],
         ["Ctrl+Tab / Ctrl+Shift+Tab", "Next / previous tab (reaches K-O)"],
         ["Ctrl+R", "Refresh all sources"],
         ["F11 / Esc", "Full screen on / off"],
