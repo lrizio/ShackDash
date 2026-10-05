@@ -38,7 +38,7 @@ the screenshots come from `python scripts/guide_screens.py`, which runs the live
 * `ShackDash.exe` from the release zip
 * From source: `python main.py` (`pip install -r requirements.txt`)
 * **SETUP**: callsign, grid locator (QTH), cluster host:port, RBN on/off, wind alert, satellite min elevation, size,
-  licence level, BoM state + radar ID, APRS on/off + radius, show/hide the MY SHACK tab
+  licence level, BoM state + radar ID, APRS on/off + radius, show/hide the MY SHACK tab, start-up check for a newer release on/off
 * Keys: `1`-`9`, `0` pick tabs A-J, `Ctrl+Tab` / `Ctrl+Shift+Tab` step through all, `Ctrl+R` refresh all, `F11` full
   screen; double-click the title bar to maximise
 

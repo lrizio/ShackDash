@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import time
 
-from PySide6.QtCore import QPoint, QRect, Qt, QTimer
-from PySide6.QtGui import QGuiApplication, QKeySequence, QShortcut
+from PySide6.QtCore import QPoint, QRect, Qt, QTimer, QUrl
+from PySide6.QtGui import QDesktopServices, QGuiApplication, QKeySequence, QShortcut
 from PySide6.QtWidgets import (QApplication, QCheckBox, QDialog, QFormLayout, QFrame, QHBoxLayout, QLabel,
                                QLineEdit, QPushButton, QSizeGrip, QSizePolicy, QSpinBox, QStackedWidget, QVBoxLayout,
                                QWidget, QComboBox, QDoubleSpinBox)
@@ -18,6 +18,7 @@ from .feeds import TelnetFeed
 from .geo import grid_to_latlon
 from .instruments import fill_table, make_table
 from .net import Hub
+from .updatecheck import PAGE_URL, UpdateChecker
 from .tabs.base import Ctx, ago, note, panel
 from .tabs.aprs_tab import AprsTab
 from .tabs.dxcal import DxCalTab
@@ -95,6 +96,7 @@ class DashWindow(QWidget):
         self._outer = QVBoxLayout(self)
         self._outer.setContentsMargins(0, 0, 0, 0)
         self._sources_dlg = None
+        self._update: tuple[str, str] | None = None
         self._normal_geo: QRect | None = None
         self.build_ui()
         self._restore_geometry()
@@ -105,6 +107,10 @@ class DashWindow(QWidget):
         self.timer.start(1000)
         if not cfg.get("qth_confirmed") and not cfg.get("_load_failed"):
             QTimer.singleShot(700, self.show_setup)         # first start: ask for call + QTH straight away
+        if cfg.get("check_updates", True):                   # one quiet look at GitHub a few seconds after start
+            self.updater = UpdateChecker(self)
+            self.updater.found.connect(self._update_found)
+            QTimer.singleShot(4000, self.updater.start)
         QShortcut(QKeySequence("F11"), self, activated=self.toggle_full)
         QShortcut(QKeySequence("Escape"), self, activated=lambda: self.isFullScreen() and self.toggle_full())
         QShortcut(QKeySequence("Ctrl+R"), self, activated=self.hub.refresh_all)
@@ -153,6 +159,12 @@ class DashWindow(QWidget):
         self.clock.setStyleSheet(f"font-family:Bahnschrift; font-size:{px(20)}px; font-weight:600; color:{t.main};")
         hb.addWidget(self.clock)
         hb.addSpacing(px(14))
+        self.update_btn = QPushButton("")
+        self.update_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.update_btn.setStyleSheet(f"color:{t.amber}; font-weight:700;")
+        self.update_btn.clicked.connect(lambda: QDesktopServices.openUrl(QUrl(self._update[1] if self._update else PAGE_URL)))
+        hb.addWidget(self.update_btn)
+        self._show_update()
         self.net_led = LedLabel(t, "DATA")
         self.net_led.setMinimumWidth(px(230))
         self.net_led.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -202,6 +214,16 @@ class DashWindow(QWidget):
         self.cur = -1
         self.show_tab(int(self.cfg.get("tab", 0)))
         self._update_station()
+
+    def _update_found(self, version: str, url: str):
+        self._update = (version, url)
+        self._show_update()
+
+    def _show_update(self):
+        self.update_btn.setVisible(self._update is not None)
+        if self._update:
+            self.update_btn.setText(f"UPDATE v{self._update[0]} AVAILABLE")
+            self.update_btn.setToolTip("A newer ShackDash is on GitHub. Click to open the download page.")
 
     def _update_station(self):
         lat, lon = self.ctx.qth
@@ -495,6 +517,8 @@ class SetupDialog(QDialog):
         self.aprs_km.setRange(10, 1000)
         self.aprs_km.setSuffix(" km")
         self.aprs_km.setValue(int(cfg.get("aprs_km", 150)))
+        self.updates = QCheckBox("Check GitHub for a newer ShackDash when the program starts")
+        self.updates.setChecked(cfg.get("check_updates", True))
         self.myshack = QCheckBox("Show the MY SHACK tab (my own hotspots, switches and LAN gear)")
         self.myshack.setChecked(cfg.get("show_myshack", True))
         self.zoom = QComboBox()
@@ -518,6 +542,7 @@ class SetupDialog(QDialog):
         form2.addRow("", self.aprs_on)
         form2.addRow("APRS radius", self.aprs_km)
         form2.addRow("", self.myshack)
+        form2.addRow("", self.updates)
         lay = QVBoxLayout(self)
         if not cfg.get("qth_confirmed"):
             welcome = note("Welcome to ShackDash. Enter your callsign and grid locator: distances, beam headings, "
@@ -556,4 +581,5 @@ class SetupDialog(QDialog):
                 "sat_min_el": self.min_el.value(), "zoom": self.zoom.currentData(),
                 "licence": self.licence.currentText(), "bom_state": self.bom_state.currentText(),
                 "bom_radar": self.bom_radar.text().strip().upper() or "IDR023", "aprs_on": self.aprs_on.isChecked(),
-                "aprs_km": self.aprs_km.value(), "show_myshack": self.myshack.isChecked()}
+                "aprs_km": self.aprs_km.value(), "show_myshack": self.myshack.isChecked(),
+                "check_updates": self.updates.isChecked()}

@@ -66,6 +66,9 @@ own or administer. It has been tested on WPSD; the Pi-Star path has had limited 
   PSKReporter who hears you. Your grid locator or approximate position is used for local weather,
   satellite passes and distance calculations. Those services handle that data under their own
   privacy policies.
+* When it starts, ShackDash makes one request to the GitHub API (api.github.com) to see whether a newer
+  release exists. It sends nothing from SETUP, and downloads or installs nothing. GitHub sees your IP address and
+  the program name/version, as with any web request. Turn it off in SETUP.
 * The MY SHACK tab only talks to devices on your own local network that you add yourself.
 * Settings are stored only on your PC, in `%APPDATA%\ShackDash`.
 * ShackDash never transmits on any radio. The APRS feature is receive-only.

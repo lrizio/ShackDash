@@ -194,6 +194,11 @@ def build():
         ["Show the MY SHACK tab", "Tab O shows the operator's own hotspots, switches and other LAN gear. "
                                   "Untick it to hide the tab, e.g. when the dashboard is given to another "
                                   "station that has none of that equipment."],
+        ["Check for a newer ShackDash", "A few seconds after start the program asks GitHub whether a newer "
+                                        "release exists. If so, an amber <b>UPDATE vX.Y AVAILABLE</b> button "
+                                        "appears in the top bar; click it to open the download page. Nothing is "
+                                        "downloaded or installed for you, and nothing is sent except the request "
+                                        "itself. Untick to turn the check off (e.g. when offline)."],
     ], [1.65, 5.55]))
 
     # ------------------------------------------------------------------------------------------------

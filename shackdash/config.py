@@ -40,6 +40,7 @@ DEFAULTS = {
     "aprs_on": True,
     "aprs_km": 150,
     "show_myshack": True,
+    "check_updates": True,
     "tab": 0,
     "geometry": None,
 }
