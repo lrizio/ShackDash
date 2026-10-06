@@ -620,7 +620,7 @@ def build():
             "licences are no longer in the ACMA register data.")])
 
     tab_section(f, "Tab O - My Shack (optional)", "tab_o.png",
-                "Tab O. Hotspots, HF matrix switches and other LAN gear, polled every 30 seconds.",
+                "Tab O. Hotspots, HF matrix switches and other LAN gear, polled every 10 seconds.",
                 "The operator's own equipment on the local network. It is optional: untick <b>Show the "
                 "MY SHACK tab</b> in SETUP to hide it, and use <b>EDIT DEVICES</b> to list your own gear.", [
         ["Tiles", "How many devices answered (and which did not), hotspots linked to a reflector, HF "
@@ -691,7 +691,7 @@ def build():
         ["M", "ARISS (contacts, SSTV); calculated on the PC; CelesTrak for the ISS", "6 h"],
         ["N", "AD1C country files; ARRL LoTW activity; callook.info; KiwiSDR list; Class Licence 2023",
          "weekly / on demand / 6 h"],
-        ["O", "Your own devices on the LAN", "30 s"],
+        ["O", "Your own devices on the LAN", "10 s"],
     ], [0.5, 5.2, 1.5]))
 
     # ------------------------------------------------------------------------------------------------

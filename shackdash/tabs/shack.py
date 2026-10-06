@@ -18,7 +18,7 @@ from ..theme import px
 from ..widgets import Fieldset, Screen
 from .base import Tab, ago, note, panel, stretch
 
-POLL_S = 30
+POLL_S = 10      # the HF matrix boxes drop to a "Heartbeat lost" alarm after 30 s without a poll, so stay well inside that
 
 
 def _uptime(s) -> str:
