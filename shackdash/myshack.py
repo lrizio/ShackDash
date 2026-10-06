@@ -137,7 +137,7 @@ def probe(dev: dict, beacons: BeaconListener | None) -> dict:
         if kind in ("wpsd", "matrix", "clock", "hotspotmon", "http"):       # the web side is down: is the box itself alive?
             ms = _ping(ip)
             if ms is not None:
-                res["error"] = "answers ping, but its web service did not reply"
+                res["error"] = f"answers ping, but its web service did not reply ({res['error'][:90]})"
                 res["ms"] = ms
     return res
 
