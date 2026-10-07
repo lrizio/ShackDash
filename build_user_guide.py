@@ -631,7 +631,7 @@ def build():
         ["Device cards", "One card per device; the dot and frame turn red when it does not answer. Each "
                          "card gives the type, the address used and how it was found (<i>name</i>, "
                          "<i>beacon</i>, <i>fixed</i> or <i>last known</i>) and the response time.<br/>"
-                         "<b>WPSD hotspot</b>: the reflector/network it is linked to and for how long, CPU "
+                         "<b>WPSD hotspot</b>: its real hostname in bold capitals at the start of the card (e.g. HS100), then the reflector/network it is linked to and for how long, CPU "
                          "temperature, load, uptime and the last station heard. <b>HF matrix box</b>: which "
                          "antenna each radio is switched to, temperatures, supply voltage and alarms. "
                          "<b>Shack Clock</b>: when it last synced to NTP, its brightness setting, WiFi "

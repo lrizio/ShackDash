@@ -13,7 +13,7 @@ from PySide6.QtWidgets import (QComboBox, QDialog, QGridLayout, QHBoxLayout, QHe
 
 from .. import config
 from ..instruments import StatTile, fill_table, make_table
-from ..myshack import TYPE_NAMES, TYPES, BeaconListener, probe_all
+from ..myshack import TYPE_NAMES, TYPES, BeaconListener, _short, probe_all
 from ..theme import px
 from ..widgets import Fieldset, Screen
 from .base import Tab, ago, note, panel, stretch
@@ -170,6 +170,9 @@ class ShackTab(Tab):
             if r["error"]:
                 lines.append(f"<span style='color:{col}'>{html.escape(r['error'])}</span>")
             if r["type"] == "wpsd" and d:
+                hn = _short(d.get("hostname") or self.devices[res.index(r)].get("host")).upper()
+                if hn:
+                    lines[0] = f"<b style='color:{t.sub}'>{html.escape(hn)}</b> · " + lines[0]
                 link = d.get("link") or {}
                 st = link.get("state", "?")
                 lcol = t.main if st == "linked" else t.amber
