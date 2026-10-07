@@ -560,7 +560,7 @@ def build():
                                "SETUP). Amber = mobile, green = fixed, blue = weather, purple = digipeaters "
                                "and gateways, grey = nothing heard for 30 minutes. Moving stations leave a "
                                "trail. The nearest 30 are labelled. The line on top shows the connection. <b>Background:</b> a dark street map (OpenStreetMap tiles, downloaded as needed and cached in "
-                               "%APPDATA%\ShackDash\tiles) shows roads, towns and forests; only the tile positions you view are sent to "
+                               "%APPDATA%\\ShackDash\\tiles) shows roads, towns and forests; only the tile positions you view are sent to "
                                "the tile server. Untick <b>Detailed APRS map background</b> in SETUP for the plain land outline. <b>Zoom and pan:</b> roll the mouse wheel to zoom in or out around the pointer, drag to move the map, and double-click to return to the full view around your QTH."],
         ["STATIONS &middot; OBJECTS &middot; WEATHER", "Everything heard, newest first: what it is (from "
                                                         "its APRS symbol), distance, bearing, when last "
