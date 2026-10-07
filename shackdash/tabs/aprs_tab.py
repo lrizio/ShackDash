@@ -41,6 +41,7 @@ class AprsTab(Tab):
         g.setVerticalSpacing(px(8))
         self.map = MapView(t)
         self.map.night = False
+        self.map.zoomable = True
         self.state = QLabel("")
         self.state.setObjectName("note")
         g.addWidget(panel(t, "APRS AROUND MY QTH", [self.state, stretch(self.map, 1)], dot=t.main), 0, 0, 2, 1)
@@ -77,6 +78,7 @@ class AprsTab(Tab):
         self.map.center_lon = lon
         self.map._land_path = None
         self.map._bg = None
+        self.map.set_home()
         self.map.update()
 
     def on_data(self, key, d):
@@ -163,7 +165,7 @@ class AprsTab(Tab):
         markers.append((lat, lon, t.red, self.ctx.call or "QTH", 11))
         self.map.set_overlays(markers=markers, paths=paths,
                               caption=f"rings {km / 3:.0f} / {2 * km / 3:.0f} / {km:.0f} km · amber mobile · green fixed "
-                                      "· blue WX · purple digi/igate · grey = quiet 30 min+")
+                                      "· blue WX · purple digi/igate · grey = quiet 30 min+ · wheel zoom, drag pan, double-click reset")
         # packet log
         log, lcol = [], []
         for p in self.ctx.aprs_log:

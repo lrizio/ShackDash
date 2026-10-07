@@ -39,6 +39,9 @@ class MapView(QWidget):
         self.setMinimumSize(px(300), px(160))
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         self.setMouseTracking(True)
+        self.zoomable = False                # wheel zoom, drag pan, double-click back to the home view
+        self._home: tuple | None = None
+        self._drag = None
 
     # ---- data -------------------------------------------------------------------
     def set_land(self, polys):
@@ -65,6 +68,79 @@ class MapView(QWidget):
         if caption is not None:
             self.caption = caption
         self.update()
+
+    # ---- zoom / pan ---------------------------------------------------------------
+    def set_home(self):
+        """Remember the current view as the one a double-click returns to."""
+        self._home = (self.lat_lo, self.lat_hi, self.span, self.center_lon)
+
+    def reset_view(self):
+        if self._home:
+            self.lat_lo, self.lat_hi, self.span, self.center_lon = self._home
+            self._view_changed()
+
+    def _view_changed(self):
+        self._land_path = None
+        self._bg = None
+        self._night_key = None
+        self.update()
+
+    def _zoom_at(self, pos, k: float):
+        """Scale the view by k (<1 zooms in), keeping the point under pos fixed."""
+        f = self._frame()
+        fx = min(1.0, max(0.0, (pos.x() - f.left()) / f.width()))
+        fy = min(1.0, max(0.0, (pos.y() - f.top()) / f.height()))
+        h = self._home or (self.lat_lo, self.lat_hi, self.span, self.center_lon)
+        home_span = h[2]
+        new_span = min(min(360.0, home_span * 4), max(home_span / 300, self.span * k))
+        k = new_span / self.span
+        rng = (self.lat_hi - self.lat_lo) * k
+        lon_at = self.center_lon + (fx - 0.5) * self.span
+        lat_at = self.lat_hi - fy * (self.lat_hi - self.lat_lo)
+        hi = lat_at + fy * rng
+        hi = min(90.0, max(-90.0 + rng, hi)) if rng < 180 else 90.0
+        self.lat_hi, self.lat_lo = hi, hi - rng
+        self.span = new_span
+        self.center_lon = (lon_at - (fx - 0.5) * new_span + 540) % 360 - 180
+        self._view_changed()
+
+    def _pan(self, dx_px: float, dy_px: float):
+        f = self._frame()
+        rng = self.lat_hi - self.lat_lo
+        dlon = -dx_px / f.width() * self.span
+        dlat = dy_px / f.height() * rng
+        hi = min(90.0, max(-90.0 + rng, self.lat_hi + dlat))
+        self.lat_hi, self.lat_lo = hi, hi - rng
+        self.center_lon = (self.center_lon + dlon + 540) % 360 - 180
+        self._view_changed()
+
+    def wheelEvent(self, e):
+        if not self.zoomable:
+            return super().wheelEvent(e)
+        steps = e.angleDelta().y() / 120.0
+        if steps:
+            self._zoom_at(e.position(), 0.8 ** steps)
+        e.accept()
+
+    def mouseDoubleClickEvent(self, e):
+        if self.zoomable:
+            self.reset_view()
+
+    def mouseMoveEvent(self, e):
+        if self._drag is not None:
+            pos = e.position()
+            last, moved = self._drag
+            if moved or (pos - last).manhattanLength() > 4:
+                self._pan(pos.x() - last.x(), pos.y() - last.y())
+                self._drag = (pos, True)
+            self.setCursor(Qt.CursorShape.ClosedHandCursor)
+
+    def mouseReleaseEvent(self, e):
+        moved = self._drag is not None and self._drag[1]
+        self._drag = None
+        self.unsetCursor()
+        if not moved:
+            self._emit_click(e.position())
 
     # ---- geometry ---------------------------------------------------------------
     def _frame(self) -> QRectF:
@@ -142,13 +218,17 @@ class MapView(QWidget):
         # graticule
         pen = QPen(qc(shade(t.screen, 34), 150), 1, Qt.PenStyle.DotLine)
         p.setPen(pen)
-        for lat in range(-60, 90, 30):
-            if self.lat_lo < lat < self.lat_hi:
-                y = self.to_px(lat, 0, f).y()
-                p.drawLine(QPointF(f.left(), y), QPointF(f.right(), y))
-        for lon in range(-180, 180, 30):
-            x = self.to_px(0, lon, f).x()
+        step = next((g for g in (30, 10, 5, 2, 1, 0.5, 0.2, 0.1, 0.05) if self.span / g >= 4), 0.05)
+        la = math.ceil(self.lat_lo / step) * step
+        while la < self.lat_hi:
+            y = self.to_px(la, 0, f).y()
+            p.drawLine(QPointF(f.left(), y), QPointF(f.right(), y))
+            la += step
+        lo = math.floor((self.center_lon - self.span / 2) / step) * step
+        while lo <= self.center_lon + self.span / 2:
+            x = self.to_px(0, lo, f).x()
             p.drawLine(QPointF(x, f.top()), QPointF(x, f.bottom()))
+            lo += step
         p.setPen(QPen(qc(shade(t.screen, 50), 200), 1))
         y = self.to_px(0, 0, f).y()
         if self.lat_lo < 0 < self.lat_hi:
@@ -234,6 +314,8 @@ class MapView(QWidget):
             if not (self.lat_lo <= lat <= self.lat_hi):
                 continue
             c = self.to_px(lat, lon, f)
+            if not f.adjusted(-px(4), -px(4), px(4), px(4)).contains(c):
+                continue
             paint_glow_dot(p, c, px(size), color, True, t.led_off)
             if label:
                 p.setFont(font(px(11), bold=True))
@@ -271,8 +353,13 @@ class MapView(QWidget):
                     p.drawPath(path)
 
     def mousePressEvent(self, e):
+        if self.zoomable:
+            self._drag = (e.position(), False)
+        else:
+            self._emit_click(e.position())
+
+    def _emit_click(self, pos):
         f = self._frame()
-        pos = e.position()
         if f.contains(pos):
             lon = (pos.x() - f.left()) / f.width() * self.span - self.span / 2 + self.center_lon
             lat = self.lat_hi - (pos.y() - f.top()) / f.height() * (self.lat_hi - self.lat_lo)

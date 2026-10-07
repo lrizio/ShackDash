@@ -93,6 +93,26 @@ def shade(hex_color: str, amount: int) -> str:
     return f"#{c(r):02x}{c(g):02x}{c(b):02x}"
 
 
+def _arrow_png(color: str, up: bool) -> str:
+    """Spin-box arrow glyph as a PNG in the temp dir (stylesheets can't draw triangles)."""
+    import os
+    import tempfile
+    from PySide6.QtCore import QPointF, Qt
+    from PySide6.QtGui import QColor, QImage, QPainter, QPolygonF
+    path = os.path.join(tempfile.gettempdir(), f"shackdash_spin_{color.lstrip('#')}_{'up' if up else 'dn'}.png")
+    img = QImage(10, 6, QImage.Format.Format_ARGB32)
+    img.fill(Qt.GlobalColor.transparent)
+    p = QPainter(img)
+    p.setRenderHint(QPainter.RenderHint.Antialiasing)
+    p.setPen(Qt.PenStyle.NoPen)
+    p.setBrush(QColor(color))
+    p.drawPolygon(QPolygonF([QPointF(1, 5), QPointF(9, 5), QPointF(5, 1)] if up else
+                            [QPointF(1, 1), QPointF(9, 1), QPointF(5, 5)]))
+    p.end()
+    img.save(path)
+    return path.replace("\\", "/")
+
+
 def stylesheet(t: Theme) -> str:
     f = px(13)
     r = px(8)
@@ -119,6 +139,17 @@ def stylesheet(t: Theme) -> str:
     QDialog, QPlainTextEdit, QLineEdit, QComboBox, QSpinBox, QListWidget {{ background: {t.bg}; }}
     QLineEdit, QComboBox, QSpinBox, QPlainTextEdit {{ background: {t.screen}; color: {t.teal_edge};
                 border: {px(1)}px solid {t.edge}; border-radius: {px(5)}px; padding: 3px; }}
+    QSpinBox, QDoubleSpinBox {{ padding-right: {px(22)}px; }}
+    QSpinBox::up-button, QDoubleSpinBox::up-button {{ subcontrol-origin: border; subcontrol-position: top right;
+                width: {px(20)}px; border-left: 1px solid {t.edge}; background: {t.btn};
+                border-top-right-radius: {px(4)}px; }}
+    QSpinBox::down-button, QDoubleSpinBox::down-button {{ subcontrol-origin: border; subcontrol-position: bottom right;
+                width: {px(20)}px; border-left: 1px solid {t.edge}; background: {t.btn};
+                border-bottom-right-radius: {px(4)}px; }}
+    QSpinBox::up-button:hover, QSpinBox::down-button:hover, QDoubleSpinBox::up-button:hover,
+    QDoubleSpinBox::down-button:hover {{ background: {t.teal}; }}
+    QSpinBox::up-arrow, QDoubleSpinBox::up-arrow {{ image: url({_arrow_png(t.text, True)}); width: {px(10)}px; height: {px(6)}px; }}
+    QSpinBox::down-arrow, QDoubleSpinBox::down-arrow {{ image: url({_arrow_png(t.text, False)}); width: {px(10)}px; height: {px(6)}px; }}
     QGroupBox {{ border: 2px solid {t.edge}; border-radius: {px(12)}px; margin-top: 14px; padding-top: 10px; }}
     QGroupBox::title {{ subcontrol-origin: margin; left: 14px; padding: 0 6px; color: {t.text}; font-weight: 600; }}
     QToolTip {{ background: {t.screen}; color: {t.text}; border: 1px solid {t.teal_edge}; }}

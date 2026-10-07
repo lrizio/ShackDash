@@ -559,7 +559,7 @@ def build():
         ["APRS AROUND MY QTH", "Map with range rings (a third, two-thirds and all of the radius set in "
                                "SETUP). Amber = mobile, green = fixed, blue = weather, purple = digipeaters "
                                "and gateways, grey = nothing heard for 30 minutes. Moving stations leave a "
-                               "trail. The nearest 30 are labelled. The line on top shows the connection."],
+                               "trail. The nearest 30 are labelled. The line on top shows the connection. <b>Zoom and pan:</b> roll the mouse wheel to zoom in or out around the pointer, drag to move the map, and double-click to return to the full view around your QTH."],
         ["STATIONS &middot; OBJECTS &middot; WEATHER", "Everything heard, newest first: what it is (from "
                                                         "its APRS symbol), distance, bearing, when last "
                                                         "heard, packet count, speed and its comment or "
