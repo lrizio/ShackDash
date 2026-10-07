@@ -429,11 +429,12 @@ class DashWindow(QWidget):
             old = (self.cfg.get("callsign"), self.cfg.get("grid"), self.cfg.get("cluster"),
                    self.cfg.get("rbn_cw"), self.cfg.get("rbn_digi"), self.cfg.get("zoom"))
             old2 = {k: self.cfg.get(k) for k in ("show_myshack", "licence", "bom_state", "bom_radar", "aprs_on",
-                                                 "aprs_km")}
+                                                 "aprs_km", "aprs_tiles")}
             self.cfg.update(dlg.values())
             config.save(self.cfg)
             if old[5] != self.cfg.get("zoom") or old2["show_myshack"] != self.cfg["show_myshack"] or \
-                    old2["licence"] != self.cfg["licence"]:
+                    old2["licence"] != self.cfg["licence"] or \
+                    old2["aprs_tiles"] != self.cfg.get("aprs_tiles", True):
                 cur_cls = type(self.tabs[self.cur]) if 0 <= self.cur < len(self.tabs) else None
                 self.build_ui()
                 self.show_tab(next((i for i, tab in enumerate(self.tabs) if type(tab) is cur_cls), 0))
@@ -558,6 +559,8 @@ class SetupDialog(QDialog):
         self.aprs_km.setRange(10, 1000)
         self.aprs_km.setSuffix(" km")
         self.aprs_km.setValue(int(cfg.get("aprs_km", 150)))
+        self.aprs_tiles = QCheckBox("Detailed APRS map background (downloads OpenStreetMap tiles, shown dark)")
+        self.aprs_tiles.setChecked(cfg.get("aprs_tiles", True))
         self.updates = QCheckBox("Check GitHub for a newer ShackDash when the program starts")
         self.updates.setChecked(cfg.get("check_updates", True))
         self.myshack = QCheckBox("Show the MY SHACK tab (my own hotspots, switches and LAN gear)")
@@ -582,6 +585,7 @@ class SetupDialog(QDialog):
         form2.addRow("BoM radar ID", self.bom_radar)
         form2.addRow("", self.aprs_on)
         form2.addRow("APRS radius", self.aprs_km)
+        form2.addRow("", self.aprs_tiles)
         form2.addRow("", self.myshack)
         form2.addRow("", self.updates)
         lay = QVBoxLayout(self)
@@ -622,5 +626,5 @@ class SetupDialog(QDialog):
                 "sat_min_el": self.min_el.value(), "zoom": self.zoom.currentData(),
                 "licence": self.licence.currentText(), "bom_state": self.bom_state.currentText(),
                 "bom_radar": self.bom_radar.text().strip().upper() or "IDR023", "aprs_on": self.aprs_on.isChecked(),
-                "aprs_km": self.aprs_km.value(), "show_myshack": self.myshack.isChecked(),
+                "aprs_km": self.aprs_km.value(), "aprs_tiles": self.aprs_tiles.isChecked(), "show_myshack": self.myshack.isChecked(),
                 "check_updates": self.updates.isChecked()}

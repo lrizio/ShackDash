@@ -12,6 +12,7 @@ from ..geo import EARTH_KM, bearing_distance, compass
 from ..instruments import fill_table, make_table
 from ..mapview import MapView
 from ..theme import px
+from ..tiles import TileLayer
 from .base import Tab, ago, hline_search, key_row, note, panel, stretch
 
 FILTERS = ["ALL", "MOBILE", "FIXED", "WX", "DIGI / IGATE", "OBJECTS"]
@@ -42,6 +43,8 @@ class AprsTab(Tab):
         self.map = MapView(t)
         self.map.night = False
         self.map.zoomable = True
+        if self.ctx.cfg.get("aprs_tiles", True):
+            self.map.set_tiles(TileLayer(self))
         self.state = QLabel("")
         self.state.setObjectName("note")
         g.addWidget(panel(t, "APRS AROUND MY QTH", [self.state, stretch(self.map, 1)], dot=t.main), 0, 0, 2, 1)

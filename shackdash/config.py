@@ -39,6 +39,7 @@ DEFAULTS = {
     "bom_radar": "IDR023",     # Melbourne 128 km
     "aprs_on": True,
     "aprs_km": 150,
+    "aprs_tiles": True,
     "show_myshack": True,
     "check_updates": True,
     "tab": 0,

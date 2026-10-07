@@ -12,6 +12,7 @@ from PySide6.QtGui import QColor, QImage, QPainter, QPainterPath, QPen, QPixmap,
 from PySide6.QtWidgets import QSizePolicy, QWidget
 
 from . import astro
+from .tiles import ATTRIBUTION, MAX_Z, tile_lat, tile_lon, tile_x, tile_y
 from .theme import Theme, px, shade
 from .widgets import font, paint_glow_dot, paint_recess, qc
 
@@ -42,6 +43,7 @@ class MapView(QWidget):
         self.zoomable = False                # wheel zoom, drag pan, double-click back to the home view
         self._home: tuple | None = None
         self._drag = None
+        self._tiles = None                   # optional TileLayer: detailed web-map background
 
     # ---- data -------------------------------------------------------------------
     def set_land(self, polys):
@@ -68,6 +70,41 @@ class MapView(QWidget):
         if caption is not None:
             self.caption = caption
         self.update()
+
+    def set_tiles(self, layer):
+        if self._tiles is not None:
+            try:
+                self._tiles.changed.disconnect(self.update)
+            except (RuntimeError, TypeError):
+                pass
+        self._tiles = layer
+        if layer is not None:
+            layer.changed.connect(self.update)
+        self.update()
+
+    def _paint_tiles(self, p, f):
+        ppd = f.width() / self.span
+        z = max(1, min(MAX_Z, round(math.log2(max(1e-6, ppd * 360 / 256)))))
+        lon_w, lon_e = self.center_lon - self.span / 2, self.center_lon + self.span / 2
+        x0, x1 = math.floor(tile_x(lon_w, z)), math.floor(tile_x(lon_e, z))
+        y0, y1 = math.floor(tile_y(self.lat_hi, z)), math.floor(tile_y(self.lat_lo, z))
+        n = 1 << z
+        if (x1 - x0 + 1) * (y1 - y0 + 1) > 120:
+            return False
+        for ty in range(max(0, y0), min(n - 1, y1) + 1):
+            top, bot = tile_lat(ty, z), tile_lat(ty + 1, z)
+            for tx in range(x0, x1 + 1):
+                pm = self._tiles.get(z, tx % n, ty)
+                if pm is None:
+                    continue
+                left = tile_lon(tx, z) - self.center_lon
+                right = tile_lon(tx + 1, z) - self.center_lon
+                ax = f.left() + (left + self.span / 2) / self.span * f.width()
+                bx = f.left() + (right + self.span / 2) / self.span * f.width()
+                ay = self.to_px(top, 0, f).y()
+                by = self.to_px(bot, 0, f).y()
+                p.drawPixmap(QRectF(ax, ay, bx - ax, by - ay), pm, QRectF(pm.rect()))
+        return True
 
     # ---- zoom / pan ---------------------------------------------------------------
     def set_home(self):
@@ -303,6 +340,9 @@ class MapView(QWidget):
         p.save()
         p.setClipRect(f)
         heat = self._heat_image()
+        shown = False
+        if self._tiles is not None:
+            shown = self._paint_tiles(p, f)
         if heat is not None:
             p.drawImage(f, heat)
         if self.night:
@@ -323,6 +363,11 @@ class MapView(QWidget):
                 p.drawText(QPointF(c.x() + px(size) * 0.6 + 1, c.y() + px(4) + 1), label)
                 p.setPen(qc(color))
                 p.drawText(QPointF(c.x() + px(size) * 0.6, c.y() + px(4)), label)
+        if shown:
+            p.setFont(font(px(9)))
+            p.setPen(qc(t.dim))
+            p.drawText(QRectF(f.left() + px(8), f.bottom() - px(16), f.width() - px(16), px(14)),
+                       Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter, ATTRIBUTION)
         if self.caption:
             p.setFont(font(px(11.5), bold=True))
             p.setPen(qc(t.dim))
