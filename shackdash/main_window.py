@@ -56,6 +56,9 @@ DEFERRED = [
 ]
 
 
+_EDGE = 5          # px of window border that grabs the mouse for resizing
+
+
 class DragBar(QFrame):
     def __init__(self, win):
         super().__init__()
@@ -94,7 +97,10 @@ class DashWindow(QWidget):
         self.tabs: list = []
         self.root: QWidget | None = None
         self._outer = QVBoxLayout(self)
-        self._outer.setContentsMargins(0, 0, 0, 0)
+        self._outer.setContentsMargins(*(_EDGE,) * 4)      # thin border strip = the resize handle
+        self._outer.setSizeConstraint(QVBoxLayout.SizeConstraint.SetNoConstraint)   # allow shrinking below the layout hint
+        self.setMinimumSize(px(900), px(560))
+        self.setMouseTracking(True)
         self._sources_dlg = None
         self._update: tuple[str, str] | None = None
         self._normal_geo: QRect | None = None
@@ -244,6 +250,41 @@ class DashWindow(QWidget):
         self.tabs[i].tick()
 
     # ---- window ---------------------------------------------------------------------------
+    def _edges_at(self, pos) -> Qt.Edge:
+        if self.isMaximized() or self.isFullScreen():
+            return Qt.Edge(0)
+        m = _EDGE + 3
+        e = Qt.Edge(0)
+        if pos.x() < m:
+            e |= Qt.Edge.LeftEdge
+        elif pos.x() >= self.width() - m:
+            e |= Qt.Edge.RightEdge
+        if pos.y() < m:
+            e |= Qt.Edge.TopEdge
+        elif pos.y() >= self.height() - m:
+            e |= Qt.Edge.BottomEdge
+        return e
+
+    def mouseMoveEvent(self, e):
+        ed = self._edges_at(e.position().toPoint())
+        L, R, T, B = Qt.Edge.LeftEdge, Qt.Edge.RightEdge, Qt.Edge.TopEdge, Qt.Edge.BottomEdge
+        if ed in (L | T, R | B):
+            cur = Qt.CursorShape.SizeFDiagCursor
+        elif ed in (R | T, L | B):
+            cur = Qt.CursorShape.SizeBDiagCursor
+        elif ed in (L, R):
+            cur = Qt.CursorShape.SizeHorCursor
+        elif ed in (T, B):
+            cur = Qt.CursorShape.SizeVerCursor
+        else:
+            cur = Qt.CursorShape.ArrowCursor
+        self.setCursor(cur)
+
+    def mousePressEvent(self, e):
+        ed = self._edges_at(e.position().toPoint())
+        if e.button() == Qt.MouseButton.LeftButton and ed and self.windowHandle():
+            self.windowHandle().startSystemResize(ed)
+
     def _restore_geometry(self):
         geo = self.cfg.get("geometry")
         scr = (self.screen() or QGuiApplication.primaryScreen()).availableGeometry()
