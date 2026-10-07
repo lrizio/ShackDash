@@ -72,7 +72,7 @@ own or administer. It has been tested on WPSD; the Pi-Star path has had limited 
 * The detailed APRS map background (on by default, switch off in SETUP) downloads map tiles from the public
   OpenStreetMap tile server (tile.openstreetmap.org) for the area you are viewing. OpenStreetMap sees your IP
   address, the program name/version and which map tiles (so, roughly which area) you look at. Tiles are cached in
-  `%APPDATA%\ShackDash	iles`. Map data © OpenStreetMap contributors.
+  `%APPDATA%\ShackDash\tiles`. Map data © OpenStreetMap contributors.
 * The MY SHACK tab only talks to devices on your own local network that you add yourself.
 * Settings are stored only on your PC, in `%APPDATA%\ShackDash`.
 * ShackDash never transmits on any radio. The APRS feature is receive-only.
