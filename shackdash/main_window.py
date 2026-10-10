@@ -144,6 +144,7 @@ class DashWindow(QWidget):
             self.root.deleteLater()
         t = self.t
         self.root = QWidget()
+        self.root.setCursor(Qt.CursorShape.ArrowCursor)    # else children inherit the window's edge-resize cursor
         self._outer.addWidget(self.root)
         v = QVBoxLayout(self.root)
         v.setContentsMargins(px(14), px(4), px(14), px(4))
@@ -279,6 +280,10 @@ class DashWindow(QWidget):
         else:
             cur = Qt.CursorShape.ArrowCursor
         self.setCursor(cur)
+
+    def leaveEvent(self, e):
+        self.unsetCursor()
+        super().leaveEvent(e)
 
     def mousePressEvent(self, e):
         ed = self._edges_at(e.position().toPoint())
