@@ -169,11 +169,14 @@ def stylesheet(t: Theme) -> str:
                 border-right: 1px solid {shade(t.btn, -25)}; border-bottom: {px(2)}px solid {shade(t.btn, -35)};
                 padding: {px(3)}px {px(5)}px; }}
     QTableCornerButton::section {{ background: {t.btn}; border: none; }}
-    QScrollBar:vertical {{ background: {t.screen}; width: {px(12)}px; margin: 0; border: none; }}
-    QScrollBar:horizontal {{ background: {t.screen}; height: {px(12)}px; margin: 0; border: none; }}
-    QScrollBar::handle {{ background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 {shade(t.btn, 30)},
-                stop:1 {shade(t.btn, -10)}); border-radius: {px(5)}px; min-height: {px(24)}px; min-width: {px(24)}px;
-                border: 1px solid {shade(t.btn, -30)}; }}
+    QScrollBar:vertical {{ background: {shade(t.screen, 26)}; width: {px(18)}px; margin: 0; border: none;
+                border-left: 1px solid {t.teal_edge}; }}
+    QScrollBar:horizontal {{ background: {shade(t.screen, 26)}; height: {px(18)}px; margin: 0; border: none;
+                border-top: 1px solid {t.teal_edge}; }}
+    QScrollBar::handle {{ background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 {shade(t.teal_edge, 30)},
+                stop:1 {shade(t.teal_edge, -25)}); border-radius: {px(7)}px; min-height: {px(40)}px; min-width: {px(40)}px;
+                border: 2px solid {t.text}; margin: 1px; }}
+    QScrollBar::handle:hover {{ background: {shade(t.teal_edge, 50)}; }}
     QScrollBar::add-line, QScrollBar::sub-line {{ width: 0; height: 0; }}
     QScrollBar::add-page, QScrollBar::sub-page {{ background: none; }}
     QSlider::groove:horizontal {{ background: {t.screen}; height: {px(8)}px; border-radius: {px(4)}px;
