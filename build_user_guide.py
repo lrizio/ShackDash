@@ -191,9 +191,10 @@ def build():
                          "radar's page on bom.gov.au."],
         ["APRS-IS feed / radius", "Turns tab L's APRS feed on or off, and how far around your QTH it "
                                   "collects stations (default 150 km). It only receives."],
-        ["Show the MY SHACK tab", "Tab O shows the operator's own hotspots, switches and other LAN gear. "
-                                  "Untick it to hide the tab, e.g. when the dashboard is given to another "
-                                  "station that has none of that equipment."],
+        ["Tabs shown", "One tick box per tab A-O. Untick the tabs you do not want and they disappear "
+                       "from the key rows and from the keyboard shortcuts; tick them again to bring them "
+                       "back. At least one tab must stay shown. Tab O (MY SHACK) is the operator's own "
+                       "gear, so hide it when the dashboard is given to a station that has none."],
         ["Check for a newer ShackDash", "A few seconds after start the program asks GitHub whether a newer "
                                         "release exists. If so, an amber <b>UPDATE vX.Y AVAILABLE</b> button "
                                         "appears in the top bar; click it to open the download page. Nothing is "
@@ -219,7 +220,7 @@ def build():
         ["THEME", "Cycles the colour theme: SHACK (default), FLIGHT DECK, AMBER NIGHT, PHOSPHOR, DAYLIGHT."],
         ["SETUP", "Station settings (see above)."],
         ["&ndash; &nbsp; &#9634; &nbsp; CLOSE", "Minimise, maximise/restore, and close the window."],
-        ["Tab keys A-O", "Pick a page (two rows; O is only there when MY SHACK is shown). The selected key has a lit LED and a blue outline. The app "
+        ["Tab keys A-O", "Pick a page (two rows; hidden tabs are left out; see SETUP). The selected key has a lit LED and a blue outline. The app "
                          "remembers the last tab you used."],
     ], [1.65, 5.55]))
     f.append(CondPageBreak(1.6 * inch))
@@ -233,8 +234,8 @@ def build():
     f.append(P("Keyboard shortcuts", style_h3))
     f.append(table([
         ["Key", "Action"],
-        ["1 ... 9, 0", "Jump to tab A ... I, and J"],
-        ["Alt+A ... Alt+O", "Jump straight to the tab with that letter (Alt+O = My Shack)"],
+        ["1 ... 9, 0", "Jump to the 1st ... 10th tab shown"],
+        ["Alt+A ... Alt+O", "Jump straight to the tab with that letter (Alt+O = My Shack); ignored if that tab is hidden"],
         ["Ctrl+B, Ctrl+D ... Ctrl+O", "The same with Ctrl (Ctrl+A and Ctrl+C stay select-all and copy)"],
         ["Ctrl+Tab / Ctrl+Shift+Tab", "Next / previous tab (reaches K-O)"],
         ["Ctrl+R", "Refresh all sources"],

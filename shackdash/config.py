@@ -40,7 +40,8 @@ DEFAULTS = {
     "aprs_on": True,
     "aprs_km": 150,
     "aprs_tiles": True,
-    "show_myshack": True,
+    "show_myshack": True,      # kept in step with hidden_tabs ("O") for older builds
+    "hidden_tabs": [],         # tab letters the user has hidden in SETUP
     "check_updates": True,
     "tab": 0,
     "geometry": None,

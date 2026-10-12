@@ -19,7 +19,7 @@ family 3D look (SHACK theme, ported from Rig Deck), and has fifteen tabs (O is o
 | **L · APRS** | APRS-IS stations, objects and weather around the QTH (receive-only login, range filter), tracks, packet log | APRS-IS (aprs2.net) |
 | **M · Planner** | meteor showers (radiant elevation at QTH), 4-week EME planner, ARISS school contacts with ISS-in-range check, ARISS SSTV events | computed locally, ariss.org |
 | **N · Tools** | callsign lookup (cty, LoTW, callook.info for US), KiwiSDR receivers near me / near the DX, AU licence privileges + frequency checker | cty, LoTW CSV, callook.info, kiwisdr list, Class Licence 2023 |
-| **O · My Shack** | own LAN gear: WPSD / Pi-Star hotspots (m5status.php, installer in `hotspot/`), HF Matrix boxes (/api/status + UDP beacon 51500), ping/web devices; editable list; hide it in SETUP | the LAN |
+| **O · My Shack** | own LAN gear: WPSD / Pi-Star hotspots (m5status.php, installer in `hotspot/`), HF Matrix boxes (/api/status + UDP beacon 51500), ping/web devices; editable list | the LAN |
 
 The **SOURCES** button (or click the DATA lamp) lists every source with its state, age, interval and credit, plus
 the items deferred for later: BoM space weather (needs a key), aprs.fi (key), QRZ/HamQTH (account), SOTAwatch
@@ -38,7 +38,7 @@ the screenshots come from `python scripts/guide_screens.py`, which runs the live
 * `ShackDash.exe` from the release zip
 * From source: `python main.py` (`pip install -r requirements.txt`)
 * **SETUP**: callsign, grid locator (QTH), cluster host:port, RBN on/off, wind alert, satellite min elevation, size,
-  licence level, BoM state + radar ID, APRS on/off + radius, show/hide the MY SHACK tab, start-up check for a newer release on/off
+  licence level, BoM state + radar ID, APRS on/off + radius, choose which of the tabs A-O are shown, start-up check for a newer release on/off
 * Keys: `1`-`9`, `0` pick tabs A-J, `Ctrl+Tab` / `Ctrl+Shift+Tab` step through all, `Ctrl+R` refresh all, `F11` full
   screen; double-click the title bar to maximise
 

@@ -8,7 +8,7 @@ from PySide6.QtCore import QPoint, QRect, Qt, QTimer, QUrl
 from PySide6.QtGui import QDesktopServices, QGuiApplication, QKeySequence, QShortcut
 from PySide6.QtWidgets import (QApplication, QCheckBox, QDialog, QFormLayout, QFrame, QHBoxLayout, QLabel,
                                QLineEdit, QPushButton, QSizeGrip, QSizePolicy, QSpinBox, QStackedWidget, QVBoxLayout,
-                               QWidget, QComboBox, QDoubleSpinBox)
+                               QWidget, QComboBox, QDoubleSpinBox, QGridLayout)
 
 from . import config, extra_sources, sources
 from .aprs import AprsFeed
@@ -42,6 +42,14 @@ TABS = [(SpaceTab, "A · SPACE WX"), (LiveTab, "B · LIVE"), (LocalTab, "C · LO
         (DxCalTab, "E · DX & CONTESTS"), (DigitalTab, "F · DIGITAL"), (VhfTab, "G · VHF/UHF"),
         (WeatherTab, "H · WEATHER"), (NewsTab, "I · NEWS"), (SunTab, "J · SUN"), (PortableTab, "K · PORTABLE"),
         (AprsTab, "L · APRS"), (PlannerTab, "M · PLANNER"), (ToolsTab, "N · TOOLS"), (ShackTab, "O · MY SHACK")]
+
+def hidden_tabs(cfg: dict) -> set:
+    """Letters of the tabs SETUP has hidden ('show_myshack': False is the pre-1.15 way to hide O)."""
+    hid = {str(x).upper() for x in cfg.get("hidden_tabs") or []}
+    if not cfg.get("show_myshack", True):
+        hid.add("O")
+    return hid
+
 
 DEFERRED = [
     ("BoM Australian Space Weather (T-index, HF fadeouts)", "free API key needed", "A"),
@@ -124,9 +132,9 @@ class DashWindow(QWidget):
             QShortcut(QKeySequence(str((i + 1) % 10)), self, activated=lambda i=i: self.show_tab(i))
         for i in range(len(TABS)):                          # tab letters A.. : Alt+letter, and Ctrl+letter too
             letter = chr(ord("A") + i)                      # (Ctrl+A / Ctrl+C stay select-all / copy)
-            QShortcut(QKeySequence(f"Alt+{letter}"), self, activated=lambda i=i: self.show_tab(i))
+            QShortcut(QKeySequence(f"Alt+{letter}"), self, activated=lambda l=letter: self.show_letter(l))
             if letter not in "AC":
-                QShortcut(QKeySequence(f"Ctrl+{letter}"), self, activated=lambda i=i: self.show_tab(i))
+                QShortcut(QKeySequence(f"Ctrl+{letter}"), self, activated=lambda l=letter: self.show_letter(l))
         QShortcut(QKeySequence("Ctrl+Tab"), self, activated=lambda: self.show_tab((self.cur + 1) % len(self.tabs)))
         QShortcut(QKeySequence("Ctrl+Shift+Tab"), self,
                   activated=lambda: self.show_tab((self.cur - 1) % len(self.tabs)))
@@ -186,7 +194,9 @@ class DashWindow(QWidget):
             hb.addWidget(b)
         v.addWidget(bar)
 
-        tabs = [(c, lab) for c, lab in TABS if c is not ShackTab or self.cfg.get("show_myshack", True)]
+        hid = hidden_tabs(self.cfg)
+        tabs = [(c, lab) for c, lab in TABS if lab[0] not in hid] or [TABS[0]]     # never an empty window
+        self.tab_letters = [lab[0] for _c, lab in tabs]
         per_row = (len(tabs) + 1) // 2
         self.tab_keys = []
         for start in (0, per_row):
@@ -239,6 +249,11 @@ class DashWindow(QWidget):
             warn = "   ·   SETTINGS FILE UNREADABLE - restart ShackDash (nothing will be saved)"
         self.station.setText(f"{self.ctx.call or 'NO CALL'}  ·  {self.cfg.get('grid') or 'NO QTH'}  ·  "
                              f"{lat:.2f}, {lon:.2f}{warn}")
+
+    def show_letter(self, letter: str):
+        """Alt/Ctrl+letter: jump to that tab if it is currently shown."""
+        if letter in self.tab_letters:
+            self.show_tab(self.tab_letters.index(letter))
 
     def show_tab(self, i: int):
         i = max(0, min(len(self.tabs) - 1, i))
@@ -433,11 +448,12 @@ class DashWindow(QWidget):
         if dlg.exec():
             old = (self.cfg.get("callsign"), self.cfg.get("grid"), self.cfg.get("cluster"),
                    self.cfg.get("rbn_cw"), self.cfg.get("rbn_digi"), self.cfg.get("zoom"))
-            old2 = {k: self.cfg.get(k) for k in ("show_myshack", "licence", "bom_state", "bom_radar", "aprs_on",
+            old2 = {k: self.cfg.get(k) for k in ("licence", "bom_state", "bom_radar", "aprs_on",
                                                  "aprs_km", "aprs_tiles")}
+            old_hidden = hidden_tabs(self.cfg)
             self.cfg.update(dlg.values())
             config.save(self.cfg)
-            if old[5] != self.cfg.get("zoom") or old2["show_myshack"] != self.cfg["show_myshack"] or \
+            if old[5] != self.cfg.get("zoom") or old_hidden != hidden_tabs(self.cfg) or \
                     old2["licence"] != self.cfg["licence"] or \
                     old2["aprs_tiles"] != self.cfg.get("aprs_tiles", True):
                 cur_cls = type(self.tabs[self.cur]) if 0 <= self.cur < len(self.tabs) else None
@@ -568,8 +584,16 @@ class SetupDialog(QDialog):
         self.aprs_tiles.setChecked(cfg.get("aprs_tiles", True))
         self.updates = QCheckBox("Check GitHub for a newer ShackDash when the program starts")
         self.updates.setChecked(cfg.get("check_updates", True))
-        self.myshack = QCheckBox("Show the MY SHACK tab (my own hotspots, switches and LAN gear)")
-        self.myshack.setChecked(cfg.get("show_myshack", True))
+        hid = hidden_tabs(cfg)
+        self.tab_checks: dict[str, QCheckBox] = {}
+        tab_grid = QGridLayout()
+        for n, (_cls, lab) in enumerate(TABS):
+            cb = QCheckBox(lab.replace("&", "&&"))    # '&' would be eaten as a mnemonic
+            cb.setChecked(lab[0] not in hid)
+            cb.toggled.connect(self._tabs_changed)
+            self.tab_checks[lab[0]] = cb
+            tab_grid.addWidget(cb, n % 5, n // 5)
+        self.tabs_note = note("")
         self.zoom = QComboBox()
         for z in (0.8, 0.9, 1.0, 1.1, 1.25, 1.5):
             self.zoom.addItem(f"× {z:g}", z)
@@ -591,7 +615,6 @@ class SetupDialog(QDialog):
         form2.addRow("", self.aprs_on)
         form2.addRow("APRS radius", self.aprs_km)
         form2.addRow("", self.aprs_tiles)
-        form2.addRow("", self.myshack)
         form2.addRow("", self.updates)
         lay = QVBoxLayout(self)
         if not cfg.get("qth_confirmed"):
@@ -602,6 +625,10 @@ class SetupDialog(QDialog):
             lay.addWidget(welcome)
         lay.addWidget(panel(t, "STATION", form, dot=t.main))
         lay.addWidget(panel(t, "MORE", form2, dot=t.sub))
+        tab_box = QVBoxLayout()
+        tab_box.addLayout(tab_grid)
+        tab_box.addWidget(self.tabs_note)
+        lay.addWidget(panel(t, "TABS SHOWN (untick the ones you do not want)", tab_box, dot=t.amber))
         btns = QHBoxLayout()
         btns.addStretch(1)
         for text, fn in (("CANCEL", self.reject), ("SAVE", self._save)):
@@ -617,9 +644,16 @@ class SetupDialog(QDialog):
         self.grid_note.setText(f"= {ll[0]:.3f}, {ll[1]:.3f}" if ll else
                                "not a valid locator" if g.strip() else "needed: your Maidenhead locator")
 
+    def _tabs_changed(self, _=None):
+        self.tabs_note.setText("" if any(c.isChecked() for c in self.tab_checks.values())
+                               else "at least one tab must stay shown")
+
     def _save(self):
         if not grid_to_latlon(self.grid.text().strip()):
             self.grid_note.setText("not a valid locator. Use e.g. QF22lb")
+            return
+        if not any(c.isChecked() for c in self.tab_checks.values()):
+            self._tabs_changed()
             return
         self.accept()
 
@@ -631,5 +665,7 @@ class SetupDialog(QDialog):
                 "sat_min_el": self.min_el.value(), "zoom": self.zoom.currentData(),
                 "licence": self.licence.currentText(), "bom_state": self.bom_state.currentText(),
                 "bom_radar": self.bom_radar.text().strip().upper() or "IDR023", "aprs_on": self.aprs_on.isChecked(),
-                "aprs_km": self.aprs_km.value(), "aprs_tiles": self.aprs_tiles.isChecked(), "show_myshack": self.myshack.isChecked(),
+                "aprs_km": self.aprs_km.value(), "aprs_tiles": self.aprs_tiles.isChecked(),
+                "hidden_tabs": [k for k, c in self.tab_checks.items() if not c.isChecked()],
+                "show_myshack": self.tab_checks["O"].isChecked(),
                 "check_updates": self.updates.isChecked()}
