@@ -141,6 +141,11 @@ class ShackTab(Tab):
         if err or res is None:
             self.tile["poll"].set("ERROR", self.t.red, err[:40])
             return
+        old = {(r["name"], r["type"]): r for r in self.results}
+        for i, r in enumerate(res):                     # a lone failed poll keeps the last good card for 2 min
+            p = old.get((r["name"], r["type"]))
+            if p and not r["up"] and p["up"] and r["t"] - p["t"] < 120 and r["type"] in ("hotspotmon", "matrix", "clock", "wpsd", "http"):
+                res[i] = p
         self.results = res
         changed = False
         for d, r in zip(self.devices, res):             # remember where each device answered

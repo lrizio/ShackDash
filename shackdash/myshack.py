@@ -88,11 +88,19 @@ def _resolve(dev: dict, beacons: BeaconListener | None) -> tuple[str | None, str
 
 
 def _get(url: str, timeout: float = 4) -> tuple[bytes, float]:
-    t0 = time.perf_counter()
-    req = urllib.request.Request(url, headers={"User-Agent": config.USER_AGENT})
-    with urllib.request.urlopen(req, timeout=timeout) as r:
-        data = r.read(200_000)
-    return data, (time.perf_counter() - t0) * 1000
+    """One retry with a longer timeout: small ESP32 boxes on a busy WiFi stall for a few seconds
+    now and then (pings of 1-3 s, some lost), which used to show as a one-poll drop-out."""
+    for attempt, to in enumerate((timeout, timeout * 2)):
+        t0 = time.perf_counter()
+        try:
+            req = urllib.request.Request(url, headers={"User-Agent": config.USER_AGENT})
+            with urllib.request.urlopen(req, timeout=to) as r:
+                data = r.read(200_000)
+            return data, (time.perf_counter() - t0) * 1000
+        except OSError:
+            if attempt:
+                raise
+    raise OSError("unreachable")
 
 
 def _ping(ip: str) -> float | None:
